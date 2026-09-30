@@ -1,11 +1,16 @@
 // src/firebase/config.ts
 //
-// Fill in your own Firebase project's config values below. Get these from:
-// Firebase Console → Project Settings → General → "Your apps" → SDK setup.
-// Free to create at https://console.firebase.google.com
+// Fill in your own Firebase project's config values below.
+// Firebase Console → Project Settings → General → Your apps → SDK setup.
 
+import { Platform } from "react-native";
 import { initializeApp } from "firebase/app";
-import { getAuth, initializeAuth, getReactNativePersistence } from "firebase/auth";
+import {
+  getAuth,
+  initializeAuth,
+  getReactNativePersistence,
+  browserLocalPersistence,
+} from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getDatabase } from "firebase/database";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -22,10 +27,21 @@ const firebaseConfig = {
 
 export const app = initializeApp(firebaseConfig);
 
-// React Native needs explicit persistence, or users get logged out on every restart
-export const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(AsyncStorage),
-});
+// Web uses browser persistence; native uses AsyncStorage.
+function createAuth() {
+  if (Platform.OS === "web") {
+    return initializeAuth(app, { persistence: browserLocalPersistence });
+  }
+  try {
+    return initializeAuth(app, {
+      persistence: getReactNativePersistence(AsyncStorage),
+    });
+  } catch {
+    // Already initialized (hot reload)
+    return getAuth(app);
+  }
+}
 
-export const db = getFirestore(app);           // player profiles, points, purchase history
-export const rtdb = getDatabase(app);           // live multiplayer room state (low-latency)
+export const auth = createAuth();
+export const db = getFirestore(app);
+export const rtdb = getDatabase(app);
