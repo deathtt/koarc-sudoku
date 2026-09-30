@@ -1,0 +1,21 @@
+{
+  "rules": {
+    "rooms": {
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null && (!data.exists() || data.child('hostUid').val() === auth.uid || root.child('rooms/' + $code + '/players/' + auth.uid).exists() || newData.child('players/' + auth.uid).exists())",
+        "players": {
+          "$uid": {
+            ".write": "auth != null && $uid === auth.uid"
+          }
+        }
+      }
+    },
+    "publicRoomIndex": {
+      ".read": "auth != null",
+      "$code": {
+        ".write": "auth != null"
+      }
+    }
+  }
+}
