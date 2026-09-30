@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "Koarc Sudoku",
+    "slug": "koarc-sudoku",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FCE2F7"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.koracraft.koarcsudoku",
+      "usesAppleSignIn": true,
+      "config": {
+        "usesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FCE2F7"
+      },
+      "package": "com.koracraft.koarcsudoku",
+      "permissions": ["INTERNET"]
+    },
+    "plugins": [
+      "expo-apple-authentication",
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-REPLACE_WITH_YOUR_ADMOB_ANDROID_APP_ID",
+          "iosAppId": "ca-app-pub-REPLACE_WITH_YOUR_ADMOB_IOS_APP_ID"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "REPLACE_WITH_YOUR_EAS_PROJECT_ID"
+      }
+    }
+  }
+}
