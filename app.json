@@ -12,6 +12,12 @@
       "backgroundColor": "#FCE2F7"
     },
     "assetBundlePatterns": ["**/*"],
+    "platforms": ["ios", "android", "web"],
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.koracraft.koarcsudoku",

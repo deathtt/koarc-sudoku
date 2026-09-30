@@ -1,56 +1,58 @@
 // src/utils/ads.ts
-//
-// Shows a single interstitial ad once per app session (per your "once, not
-// repeated" requirement) — after the player's first puzzle finish, not
-// before, so it doesn't interrupt first-time onboarding.
-//
-// You need a real AdMob account (admob.google.com, free to create) and your
-// own ad unit IDs — the test IDs below always work in development but earn
-// nothing; swap them for your real ad unit IDs before publishing.
+// Web-safe: AdMob is mobile-only. On web this is a no-op.
 
-import mobileAds, {
-  InterstitialAd,
-  AdEventType,
-  TestIds,
-} from "react-native-google-mobile-ads";
-
-const INTERSTITIAL_AD_UNIT_ID = __DEV__
-  ? TestIds.INTERSTITIAL
-  : "REPLACE_WITH_YOUR_REAL_ADMOB_INTERSTITIAL_UNIT_ID";
+import { Platform } from "react-native";
 
 let hasShownThisSession = false;
-let interstitial: InterstitialAd | null = null;
 
 export async function initAds() {
-  await mobileAds().initialize();
-  interstitial = InterstitialAd.createForAdRequest(INTERSTITIAL_AD_UNIT_ID, {
-    requestNonPersonalizedAdsOnly: false,
-  });
-  interstitial.load();
+  if (Platform.OS === "web") return;
+  try {
+    const mobileAds = (await import("react-native-google-mobile-ads")).default;
+    const { InterstitialAd, TestIds } = await import("react-native-google-mobile-ads");
+    const INTERSTITIAL_AD_UNIT_ID = __DEV__
+      ? TestIds.INTERSTITIAL
+      : "REPLACE_WITH_YOUR_REAL_ADMOB_INTERSTITIAL_UNIT_ID";
+    await mobileAds().initialize();
+    (globalThis as any).__koarcInterstitial = InterstitialAd.createForAdRequest(
+      INTERSTITIAL_AD_UNIT_ID,
+      { requestNonPersonalizedAdsOnly: false }
+    );
+    (globalThis as any).__koarcInterstitial.load();
+  } catch {
+    // ignore on web / missing native module
+  }
 }
 
 export function showOnceAd(onClosed?: () => void) {
-  if (hasShownThisSession || !interstitial) {
+  if (Platform.OS === "web" || hasShownThisSession) {
     onClosed?.();
     return;
   }
-  const unsubscribeLoaded = interstitial.addAdEventListener(AdEventType.LOADED, () => {
-    interstitial?.show();
-  });
-  const unsubscribeClosed = interstitial.addAdEventListener(AdEventType.CLOSED, () => {
-    hasShownThisSession = true;
-    unsubscribeLoaded();
-    unsubscribeClosed();
+  try {
+    const interstitial = (globalThis as any).__koarcInterstitial;
+    if (!interstitial) {
+      onClosed?.();
+      return;
+    }
+    const { AdEventType } = require("react-native-google-mobile-ads");
+    const unsubLoaded = interstitial.addAdEventListener(AdEventType.LOADED, () => {
+      interstitial?.show();
+    });
+    const unsubClosed = interstitial.addAdEventListener(AdEventType.CLOSED, () => {
+      hasShownThisSession = true;
+      unsubLoaded();
+      unsubClosed();
+      onClosed?.();
+    });
+    const unsubError = interstitial.addAdEventListener(AdEventType.ERROR, () => {
+      unsubLoaded();
+      unsubClosed();
+      unsubError();
+      onClosed?.();
+    });
+    if (interstitial.loaded) interstitial.show();
+  } catch {
     onClosed?.();
-  });
-  const unsubscribeError = interstitial.addAdEventListener(AdEventType.ERROR, () => {
-    // Ad failed to load (no fill, offline, etc.) — don't block the player
-    unsubscribeLoaded();
-    unsubscribeClosed();
-    unsubscribeError();
-    onClosed?.();
-  });
-  if (interstitial.loaded) {
-    interstitial.show();
   }
 }
