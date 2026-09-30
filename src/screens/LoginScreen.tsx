@@ -1,11 +1,10 @@
 // src/screens/LoginScreen.tsx
 import React, { useState } from "react";
 import { View, Text, StyleSheet, Pressable, Platform, ActivityIndicator, Alert } from "react-native";
-import * as AppleAuthentication from "expo-apple-authentication";
 import { useGoogleSignIn, signInWithApple, useDiscordSignIn } from "../firebase/auth";
 import { theme } from "../theme";
 
-export default function LoginScreen() {
+export default function LoginScreen({ onGuest }: { onGuest: () => void }) {
   const [loading, setLoading] = useState<string | null>(null);
   const { signInWithGoogle } = useGoogleSignIn();
   const { signInWithDiscord } = useDiscordSignIn();
@@ -15,7 +14,12 @@ export default function LoginScreen() {
     try {
       await action();
     } catch (err: any) {
-      Alert.alert("Sign-in failed", err?.message ?? "Please try again.");
+      const msg = err?.message ?? "Please try again.";
+      if (Platform.OS === "web") {
+        window.alert("Sign-in failed: " + msg + "\n\nTip: use Play as Guest until Firebase/Google is configured.");
+      } else {
+        Alert.alert("Sign-in failed", msg);
+      }
     } finally {
       setLoading(null);
     }
@@ -28,21 +32,33 @@ export default function LoginScreen() {
 
       <View style={styles.buttons}>
         <Pressable
+          style={[styles.btn, styles.guest]}
+          onPress={onGuest}
+          disabled={!!loading}
+        >
+          <Text style={styles.btnTextLight}>Play as Guest</Text>
+        </Pressable>
+
+        <Pressable
           style={[styles.btn, styles.google]}
           onPress={() => handle("google", signInWithGoogle)}
           disabled={!!loading}
         >
-          {loading === "google" ? <ActivityIndicator color={theme.colors.ink} /> : <Text style={styles.btnTextDark}>Continue with Google</Text>}
+          {loading === "google" ? (
+            <ActivityIndicator color={theme.colors.ink} />
+          ) : (
+            <Text style={styles.btnTextDark}>Continue with Google</Text>
+          )}
         </Pressable>
 
         {Platform.OS === "ios" && (
-          <AppleAuthentication.AppleAuthenticationButton
-            buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
-            buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-            cornerRadius={24}
-            style={styles.appleBtn}
+          <Pressable
+            style={[styles.btn, styles.apple]}
             onPress={() => handle("apple", signInWithApple)}
-          />
+            disabled={!!loading}
+          >
+            <Text style={styles.btnTextLight}>Continue with Apple</Text>
+          </Pressable>
         )}
 
         <Pressable
@@ -50,12 +66,16 @@ export default function LoginScreen() {
           onPress={() => handle("discord", signInWithDiscord)}
           disabled={!!loading}
         >
-          {loading === "discord" ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnTextLight}>Continue with Discord</Text>}
+          {loading === "discord" ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.btnTextLight}>Continue with Discord</Text>
+          )}
         </Pressable>
       </View>
 
       <Text style={styles.footnote}>
-        By continuing you agree to Koarc's Terms and Privacy Policy.
+        Guest mode works offline for daily puzzles. Google/Discord need Firebase keys.
       </Text>
     </View>
   );
@@ -71,15 +91,15 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: theme.fonts.display,
-    fontSize: 72,
-    color: theme.colors.white,
-    lineHeight: 72,
+    fontSize: 80,
+    fontWeight: "700",
+    color: theme.colors.ink,
+    lineHeight: 88,
   },
   subtitle: {
-    color: theme.colors.white,
-    opacity: 0.9,
-    fontSize: 14,
-    marginBottom: 40,
+    color: theme.colors.inkSoft,
+    fontSize: 15,
+    marginBottom: 36,
   },
   buttons: { width: "100%", maxWidth: 340, gap: 12 },
   btn: {
@@ -87,18 +107,20 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
+    minHeight: 48,
   },
+  guest: { backgroundColor: theme.colors.accentDeep },
   google: { backgroundColor: theme.colors.white },
+  apple: { backgroundColor: "#000" },
   discord: { backgroundColor: "#5865F2" },
-  appleBtn: { width: "100%", height: 48 },
   btnTextDark: { color: theme.colors.ink, fontWeight: "600", fontSize: 15 },
   btnTextLight: { color: "#fff", fontWeight: "600", fontSize: 15 },
   footnote: {
-    color: theme.colors.white,
-    opacity: 0.75,
-    fontSize: 11,
-    marginTop: 30,
+    color: theme.colors.inkSoft,
+    fontSize: 12,
+    marginTop: 28,
     textAlign: "center",
-    maxWidth: 280,
+    maxWidth: 300,
+    lineHeight: 18,
   },
 });

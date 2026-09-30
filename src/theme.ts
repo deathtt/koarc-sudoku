@@ -1,6 +1,5 @@
 // src/theme.ts
-// Same brand identity as the web/Devvit versions: pink background, pure
-// white text/UI, Amatic SC for display headings.
+// Brand: pink background, white UI. Display font falls back to Georgia/serif on web.
 
 export const theme = {
   colors: {
@@ -17,7 +16,8 @@ export const theme = {
     incorrectText: "#C23A52",
   },
   fonts: {
-    display: "AmaticSC-Bold",   // load via expo-font, see App.tsx
+    // Amatic SC when loaded; Georgia looks similar on web without extra setup
+    display: "Amatic SC, Georgia, serif",
     body: "System",
   },
 };
